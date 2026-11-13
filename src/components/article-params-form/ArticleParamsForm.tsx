@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import {
   defaultArticleState,
   fontFamilyOptions,
@@ -8,6 +8,7 @@ import {
   backgroundColors,
   contentWidthArr,
 } from 'src/constants/articleProps';
+import { useOutsideClickClose } from 'src/hooks/useOutsideClickClose';
 import { ArrowButton } from 'src/ui/arrow-button';
 import { Button } from 'src/ui/button';
 import { RadioGroup } from 'src/ui/radio-group';
@@ -15,7 +16,7 @@ import { Select } from 'src/ui/select';
 import { Separator } from 'src/ui/separator';
 import { Text } from 'src/ui/text';
 
-import type { ArticleStateType } from 'src/constants/articleProps';
+import type { ArticleStateType, OptionType } from 'src/constants/articleProps';
 
 import styles from './ArticleParamsForm.module.scss';
 
@@ -28,34 +29,24 @@ export const ArticleParamsForm = ({
   articleState,
   onApply,
 }: TArticleParamsFormProps): React.JSX.Element => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const [formState, setFormState] = useState<ArticleStateType>(articleState);
 
-  const sidebarRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    setFormState(articleState);
-  }, [articleState]);
+  useOutsideClickClose(isSidebarOpen, rootRef, () => setIsSidebarOpen(false));
 
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleClickOutside = (event: MouseEvent): void => {
-      if (sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
+  const handleFieldChange = (field: keyof ArticleStateType) => {
+    return (option: OptionType): void => {
+      setFormState((prevState) => ({ ...prevState, [field]: option }));
     };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return (): void => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen]);
+  };
 
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
     onApply(formState);
-    setIsOpen(false);
+    setIsSidebarOpen(false);
   };
 
   const handleReset = (e: React.FormEvent): void => {
@@ -65,12 +56,14 @@ export const ArticleParamsForm = ({
   };
 
   return (
-    <>
-      <ArrowButton isOpen={isOpen} onClick={(): void => setIsOpen(!isOpen)} />
+    <div ref={rootRef}>
+      <ArrowButton
+        isOpen={isSidebarOpen}
+        onClick={(): void => setIsSidebarOpen(!isSidebarOpen)}
+      />
 
       <aside
-        ref={sidebarRef}
-        className={clsx(styles.container, { [styles.container_open]: isOpen })}
+        className={clsx(styles.container, { [styles.container_open]: isSidebarOpen })}
       >
         <form className={styles.form} onSubmit={handleSubmit} onReset={handleReset}>
           <Text as="h2" size={31} weight={800} uppercase>
@@ -81,48 +74,39 @@ export const ArticleParamsForm = ({
             title="Шрифт"
             selected={formState.fontFamilyOption}
             options={fontFamilyOptions}
-            onChange={(option) =>
-              setFormState({ ...formState, fontFamilyOption: option })
-            }
+            onChange={handleFieldChange('fontFamilyOption')}
           />
-          <Separator />
 
           <RadioGroup
             title="Размер шрифта"
             name="fontSize"
             options={fontSizeOptions}
             selected={formState.fontSizeOption}
-            onChange={(option) => setFormState({ ...formState, fontSizeOption: option })}
+            onChange={handleFieldChange('fontSizeOption')}
           />
+
+          <Select
+            title="Цвет шрифта"
+            selected={formState.fontColor}
+            options={fontColors}
+            onChange={handleFieldChange('fontColor')}
+          />
+
           <Separator />
+
+          <Select
+            title="Цвет фона"
+            selected={formState.backgroundColor}
+            options={backgroundColors}
+            onChange={handleFieldChange('backgroundColor')}
+          />
 
           <Select
             title="Ширина контента"
             selected={formState.contentWidth}
             options={contentWidthArr}
-            onChange={(option) => setFormState({ ...formState, contentWidth: option })}
+            onChange={handleFieldChange('contentWidth')}
           />
-          <Separator />
-
-          <RadioGroup
-            title="Цвет шрифта"
-            name="fontColor"
-            options={fontColors}
-            selected={formState.fontColor}
-            onChange={(option) => setFormState({ ...formState, fontColor: option })}
-          />
-          <Separator />
-
-          <RadioGroup
-            title="Цвет фона"
-            name="backgroundColor"
-            options={backgroundColors}
-            selected={formState.backgroundColor}
-            onChange={(option) =>
-              setFormState({ ...formState, backgroundColor: option })
-            }
-          />
-          <Separator />
 
           <div className={styles.bottomContainer}>
             <Button title="Сбросить" htmlType="reset" type="clear" />
@@ -130,6 +114,6 @@ export const ArticleParamsForm = ({
           </div>
         </form>
       </aside>
-    </>
+    </div>
   );
 };

@@ -27,7 +27,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
-    "@storybook/cli": "^10.6.7",
     "@storybook/react-vite": "^10.5.9",
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",

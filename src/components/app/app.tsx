@@ -1,4 +1,4 @@
-import { defaultArticleState } from '@/constants/articleProps.ts';
+import { defaultArticleState } from '@/constants/articleProps';
 import { clsx } from 'clsx';
 import { useState } from 'react';
 
